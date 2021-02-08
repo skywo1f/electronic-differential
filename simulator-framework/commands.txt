@@ -1,0 +1,5 @@
+#in case python gets super stuck:
+ps ax | grep python
+kill -9 pid
+
+

@@ -1,0 +1,4 @@
+gcc client-to-py.c -o client-to-py.o
+
+
+python3 server-to-gcc.py 

@@ -1,0 +1,26 @@
+gedit ~/.gazebo/models/my_robot/model.sdf
+
+gazebo --verbose ../velodyne.world
+
+./vel 4
+
+gz topic -v /gazebo/default/pose/info
+
+python3 server-to-gcc.py
+
+dont forget to make clean and cmake every time there is a new version of gazebo or on a new pc.
+
+gazebo self-installs with:
+curl -sSL http://get.gazebosim.org | sh
+
+also the my_robot folder needs to go into .gazebo/models/
+also update setenv to point to the local git folder
+
+#to run the full stack (mostly in order):
+gazebo --verbose ../velodyne.world
+python3 simulatedPathDrive.py 
+python3 driver-to-gazebo.py
+./vel 4
+
+
+

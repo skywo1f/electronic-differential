@@ -20,10 +20,21 @@
 #include <gazebo/gazebo_client.hh>
 #endif
 
+/*
 double x_pos_left = 0;
 double z_pos_left = 0;
 double x_pos_right = 0;
 double z_pos_right = 0;
+*/
+//position
+double x_pos = 0;
+double y_pos = 0;
+double z_pos = 0;
+//orientation
+double x_ori = 0;
+double y_ori = 0;
+double z_ori = 0;
+double w_ori = 0;
 
 void posesStampedCallback(ConstPosesStampedPtr &posesStamped)
 {
@@ -38,11 +49,15 @@ void posesStampedCallback(ConstPosesStampedPtr &posesStamped)
     std::string name = pose.name();
 	if (name == std::string("my_velodyne")) {
 		const ::gazebo::msgs::Vector3d &position = pose.position();
-		x_pos_left = position.x();
-		z_pos_left = position.y();
+		x_pos = position.x();
+		y_pos = position.y();
+		z_pos = position.z();
+
 		const ::gazebo::msgs::Quaternion &orientation = pose.orientation();
-		x_pos_right = orientation.z();
-		z_pos_right = orientation.w();
+		x_ori = orientation.x();
+		y_ori = orientation.y();
+		z_ori = orientation.z();
+		w_ori = orientation.w();
 	}
 	    	/*
     if (name == std::string("my_velodyne::my_robot::left_wheel")) {
@@ -103,26 +118,30 @@ gazebo::client::setup(_argc, _argv);
 
     while(1){
  
-        std::string x_string_l = std::to_string(x_pos_left);
-	std::string z_string_l = std::to_string(z_pos_left);
-	std::string x_string_r = std::to_string(x_pos_right);
-        std::string z_string_r = std::to_string(z_pos_right);
+        std::string x_pos_string = std::to_string(x_pos);
+	std::string y_pos_string = std::to_string(y_pos);
+	std::string z_pos_string = std::to_string(z_pos);
 
-	std::string all_strings = x_string_l + " " + z_string_l + " " + x_string_r + " " + z_string_r;
+	std::string x_ori_string = std::to_string(x_ori);
+        std::string y_ori_string = std::to_string(y_ori);
+        std::string z_ori_string = std::to_string(z_ori);
+        std::string w_ori_string = std::to_string(w_ori);
+
+	std::string all_strings = x_pos_string + " " + y_pos_string + " " + z_pos_string + " " + x_ori_string + " " + y_ori_string + " " + z_ori_string + " " + w_ori_string;
         char hello[all_strings.size() + 1];
         strcpy(hello, all_strings.c_str());
         char buffer[1024] = {0};
         send(sock , hello , strlen(hello) , 0 );
-        printf("request sent\n");
-        printf(hello);
+//        printf("request sent\n");
+//        printf(hello);
         valread = read( sock , buffer, 1024);
 	std::string bufferString(buffer);
         std::stringstream ss(bufferString);
         while (ss >> d)
             wheelVec.push_back (d);
 
-	printf("\n%s\n",buffer );
-        printf("finished connecting to python\n");
+//	printf("\n%s\n",buffer );
+//        printf("finished connecting to python\n");
 
 
 

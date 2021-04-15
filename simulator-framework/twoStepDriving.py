@@ -171,6 +171,7 @@ class twoStepDriving:
                                 overshot = abs(omegaSmooth)*omegaStrength
         
                         turnStrength = DEK/distance + AEK*abs(delta) + sumE*SEK
+                        print(nav.phiCoord_g)
 #                       print(latitude_g,longitude_g)
 #                       print(thetaCoord_g,kAngle_g)
                         print(distance,delta,direction,overshot,sumE*SEK)

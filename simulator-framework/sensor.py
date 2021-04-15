@@ -149,7 +149,7 @@ class sensorThrow:
 #port5 talks to d2g
 class simulatedThrow(sensorThrow):
     encoding = 'utf-8'
-    def __init__(self,name,port,port2,port3,port4,port5,usb = 0,baudrate = 0,nValues = 0,deviations = 0):
+    def __init__(self,name,port,port2,port3,port4,port5,port6,usb = 0,baudrate = 0,nValues = 0,deviations = 0):
         super().__init__(name,port,usb,baudrate,nValues,deviations)
         tcpPart = "tcp://localhost:"
         fullPort2 = tcpPart + str(port2)
@@ -158,15 +158,22 @@ class simulatedThrow(sensorThrow):
         self.port3 = fullPort3
         fullPort4 = tcpPart + str(port4)
         self.port4 = fullPort4
+        fullPort6 = tcpPart + str(port6)
+        self.port6 = fullPort6
+    
+
         tcpPartStar = "tcp://*:"
         fullPort5 = tcpPartStar + str(port5)
         self.port5 = fullPort5
 
         self.northward = 0
         self.eastward = 0
+        self.altitude = 0
         self.thetaCoord = 0
+        self.phiCoord = 0
         self.lon = 0
         self.lat = 0
+        self.alt = 0
         self.omega = 0
         self.lwp = 0
         self.rwp = 0
@@ -195,9 +202,11 @@ class simulatedThrow(sensorThrow):
 #            self.eastward = float(data[1])
             self.northward =   -float(data[1])
             self.eastward = -float(data[0])
+            self.altitude = float(data[2])
 
-            self.thetaCoord = (-(float(data[2])) + 90)%360
-#            self.thetaCoord = float(data[2])
+            self.thetaCoord = (-(float(data[3])) + 90)%360
+            self.phiCoord = float(data[4])
+
             self.omegaCalm = 0.01
     def crossPole(self,theta,lastTheta):
         if theta - lastTheta > 180:
@@ -214,7 +223,7 @@ class simulatedThrow(sensorThrow):
         lastTime = time.time()
         lastTheta = self.thetaCoord
         while True:
-
+            self.alt = self.altitude
             self.lon, self.lat = myProj(self.eastward +562543.955,self.northward + 4415393.656 ,inverse=True)           
 #            print(self.lon,self.lat)
 #            self.lon, self.lat = myProj(self.eastward+562543.955 ,self.southward - 4415393.656 ,inverse=True)
@@ -247,6 +256,12 @@ class simulatedThrow(sensorThrow):
         socket4 = context4.socket(zmq.REQ)
         socket4.connect(self.port4)
 
+#imu
+        context6 = zmq.Context()
+        socket6 = context6.socket(zmq.REQ)
+        socket6.connect(self.port6)
+
+
         while True:
             gpsString = str(self.lat) + " " + str(self.lon)
             socket1.send(gpsString.encode(encoding))
@@ -259,6 +274,10 @@ class simulatedThrow(sensorThrow):
             omegaString = str(self.omega)
             socket4.send(omegaString.encode(encoding))
             message = socket4.recv()
+
+            pitchString = str(self.phiCoord)
+            socket6.send(pitchString.encode(encoding))
+            message = socket6.recv()
 
 
 #grab output speed values from driving algorithm to send back to simulator
@@ -674,7 +693,7 @@ if __name__ == "__main__":
         sensor.sendValues()
                  
     else:
-        sensor =  sensorThrow(arguments[1],arguments[2],argumets[3],arguments[4],arguments[5])
+        sensor =  sensorThrow(arguments[1],arguments[2],argumets[3],arguments[4],arguments[5],arguments[6])
         sensor.connectToSensor()
         sensor.sendValues()
 

@@ -32,6 +32,7 @@ class navigation:
                 self.rightWheelPwr_g = 0.0                           #angle to set right wheel to
                 self.thetaCoord_g = 0                                #heading data from compass
                 self.phiCoord_g = 0
+                self.rollCoord_g = 0
                 self.latitude_g  = 0                                 #latitude data from gps
                 self.longitude_g = 0                                 #longitude data from gps
                 self.altitude_g = 0
@@ -44,11 +45,12 @@ class navigation:
                 self.getCompass(sim_or_real)
                 self.getGPS()
                 self.getPitch()
+                self.getRoll()
                 self.kalman_angle()
                 self.calcGpsHeading()
                 self.bothPid()
                 if sim_or_real == "sim":
-                        simToCode = simulatedThrow("simulator",5580,5581,5582,5583,5584,5590)                #initialize bridging algorithm for simulator
+                        simToCode = simulatedThrow("simulator",5580,5581,5582,5583,5584,5590,5591)                #initialize bridging algorithm for simulator
                         simToCode.grabSpeeds()                                                      #grab desired speeds from driver and prepare to hand to simulator
                         simToCode.sendValues()                                                      #take values from simulator and give them to driver
                         simToCode.grabValues()                                                      #grab location data from simulator and prepare to give them to driver
@@ -131,6 +133,18 @@ class navigation:
                     pitchSocket.send(b"thanks")
                     decoded = message.decode(encoding)
                     self.phiCoord_g = decoded
+
+        @threaded
+        def getRoll(self):
+                rollContext = zmq.Context()
+                rollSocket = rollContext.socket(zmq.REP)
+                rollSocket.bind("tcp://*:5591")
+                while True:
+                    message = b"0"
+                    message = rollSocket.recv()
+                    rollSocket.send(b"thanks")
+                    decoded = message.decode(encoding)
+                    self.rollCoord_g = decoded
 
         def angle_interpolate(self,angle):
 #    deviations = [0.95, 6.75, 8.7, 9.3, 5.35, -6.1, -15.5, -9.5, 0.95]                    #deviations

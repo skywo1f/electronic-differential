@@ -73,7 +73,7 @@ class twoStepDriving:
                 run_time = time.time() - start_time
                 turnDone = 0
                 while(turnDone == 0):
-#                       print(thetaCoord_g,thetaGoal)
+#                        print(nav.thetaCoord_g,thetaGoal)
                         direction = turnTable(nav.thetaCoord_g,thetaGoal)                                       #get direction to turn      
                         delta = deltaTheta(direction,nav.thetaCoord_g,thetaGoal)                                        #get distance left to turn
                         if (delta < self.angleTolerance):
@@ -171,9 +171,10 @@ class twoStepDriving:
                                 overshot = abs(omegaSmooth)*omegaStrength
         
                         turnStrength = DEK/distance + AEK*abs(delta) + sumE*SEK
-                        print(nav.phiCoord_g)
+#                        print(nav.phiCoord_g)
+                        print(nav.rollCoord_g)
 #                       print(latitude_g,longitude_g)
-#                       print(thetaCoord_g,kAngle_g)
+#                        print(thetaCoord_g,kAngle_g)
                         print(distance,delta,direction,overshot,sumE*SEK)
                         if omegaSmooth > 0:
                                 if direction > 0:

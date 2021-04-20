@@ -149,7 +149,7 @@ class sensorThrow:
 #port5 talks to d2g
 class simulatedThrow(sensorThrow):
     encoding = 'utf-8'
-    def __init__(self,name,port,port2,port3,port4,port5,port6,usb = 0,baudrate = 0,nValues = 0,deviations = 0):
+    def __init__(self,name,port,port2,port3,port4,port5,port6,port7,usb = 0,baudrate = 0,nValues = 0,deviations = 0):
         super().__init__(name,port,usb,baudrate,nValues,deviations)
         tcpPart = "tcp://localhost:"
         fullPort2 = tcpPart + str(port2)
@@ -160,7 +160,8 @@ class simulatedThrow(sensorThrow):
         self.port4 = fullPort4
         fullPort6 = tcpPart + str(port6)
         self.port6 = fullPort6
-    
+        fullPort7 = tcpPart + str(port7)
+        self.port7 = fullPort7
 
         tcpPartStar = "tcp://*:"
         fullPort5 = tcpPartStar + str(port5)
@@ -171,6 +172,7 @@ class simulatedThrow(sensorThrow):
         self.altitude = 0
         self.thetaCoord = 0
         self.phiCoord = 0
+        self.rollCoord = 0
         self.lon = 0
         self.lat = 0
         self.alt = 0
@@ -206,7 +208,8 @@ class simulatedThrow(sensorThrow):
 
             self.thetaCoord = (-(float(data[3])) + 90)%360
             self.phiCoord = float(data[4])
-
+            self.rollCoord = float(data[5])
+#            print(self.thetaCoord)
             self.omegaCalm = 0.01
     def crossPole(self,theta,lastTheta):
         if theta - lastTheta > 180:
@@ -260,13 +263,14 @@ class simulatedThrow(sensorThrow):
         context6 = zmq.Context()
         socket6 = context6.socket(zmq.REQ)
         socket6.connect(self.port6)
-
+        context7 = zmq.Context()
+        socket7 = context7.socket(zmq.REQ)
+        socket7.connect(self.port7)
 
         while True:
             gpsString = str(self.lat) + " " + str(self.lon)
             socket1.send(gpsString.encode(encoding))
             message = socket1.recv()
-            
             compassString = str(self.thetaCoord)
             socket3.send(compassString.encode(encoding))
             message = socket3.recv()
@@ -279,6 +283,9 @@ class simulatedThrow(sensorThrow):
             socket6.send(pitchString.encode(encoding))
             message = socket6.recv()
 
+            rollString = str(self.rollCoord)
+            socket7.send(rollString.encode(encoding))
+            message = socket7.recv()
 
 #grab output speed values from driving algorithm to send back to simulator
     @threaded
@@ -693,7 +700,7 @@ if __name__ == "__main__":
         sensor.sendValues()
                  
     else:
-        sensor =  sensorThrow(arguments[1],arguments[2],argumets[3],arguments[4],arguments[5],arguments[6])
+        sensor =  sensorThrow(arguments[1],arguments[2],argumets[3],arguments[4],arguments[5],arguments[6],arguments[7])
         sensor.connectToSensor()
         sensor.sendValues()
 

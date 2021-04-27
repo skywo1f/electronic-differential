@@ -20,5 +20,18 @@
       <plugin name="velodyne_control" filename="./libvelodyne_plugin.so"/>
     </model>
 
+    <!-- A follower bot -->
+       <model name="my_follower">
+      <include>
+        <uri>model://my_follow</uri>
+	<pose>-2.0 0 0 0 0 0</pose>
+	</include>
+
+      <!-- Attach the plugin to this model -->
+      <plugin name="follow_control" filename="./libfollow_plugin.so"/>
+    </model>
+
+
+
   </world>
 </sdf>

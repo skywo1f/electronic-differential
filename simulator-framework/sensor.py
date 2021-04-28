@@ -216,17 +216,17 @@ class simulatedThrow(sensorThrow):
             data = re.split(' ',alphabet)
 #            self.northward =   float(data[0])                                                          #default
 #            self.eastward = float(data[1])
-            self.northward =   -float(data[1])
+            self.northward =   -float(data[2])
             self.eastward = -float(data[0])
-            self.altitude = float(data[2])
+            self.altitude = float(data[1])
 
             self.thetaCoord = (-(float(data[3])) + 90)%360
             self.phiCoord = float(data[4])
             self.rollCoord = float(data[5])
 
-            self.northward2 =   -float(data[7])
+            self.northward2 =   -float(data[8])
             self.eastward2 = -float(data[6])
-            self.altitude2 = float(data[8])
+            self.altitude2 = float(data[7])
 
             self.thetaCoord2 = (-(float(data[9])) + 90)%360
             self.phiCoord2 = float(data[10])

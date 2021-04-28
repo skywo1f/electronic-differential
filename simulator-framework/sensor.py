@@ -173,12 +173,27 @@ class simulatedThrow(sensorThrow):
         self.thetaCoord = 0
         self.phiCoord = 0
         self.rollCoord = 0
+        self.northward2 = 0
+        self.eastward2 = 0
+        self.altitude2 = 0
+        self.thetaCoord2 = 0
+        self.phiCoord2 = 0
+        self.rollCoord2 = 0
+
         self.lon = 0
         self.lat = 0
         self.alt = 0
         self.omega = 0
+
+        self.lon2 = 0
+        self.lat2 = 0
+        self.alt2 = 0
+        self.omega2 = 0
+
         self.lwp = 0
+        self.lwp2 = 0
         self.rwp = 0
+        self.rwp2 = 0
         self.dampConstant = -0.1
 #also returns values to simulator. overwrite superclass
     @threaded
@@ -187,15 +202,14 @@ class simulatedThrow(sensorThrow):
         context5 = zmq.Context()
         socket5 = context5.socket(zmq.REP)
         socket5.bind("tcp://*:5584")
-#        socket5.connect(self.port5)
         message = socket5.recv()
-        response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant)
-#        response = str(self.rwp*self.dampConstant) + " " + str(self.lwp*self.dampConstant)
+#        response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp2*self.dampConstant) + " " + str(self.rwp2*self.dampConstant)
+        response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant)
         socket5.send(response.encode(encoding))
         print("connected")
 
         while True:
-            response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant)
+            response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant)
             message = socket5.recv()
             socket5.send(response.encode(encoding))
             alphabet = message.decode(encoding)
@@ -209,8 +223,18 @@ class simulatedThrow(sensorThrow):
             self.thetaCoord = (-(float(data[3])) + 90)%360
             self.phiCoord = float(data[4])
             self.rollCoord = float(data[5])
+
+            self.northward2 =   -float(data[7])
+            self.eastward2 = -float(data[6])
+            self.altitude2 = float(data[8])
+
+            self.thetaCoord2 = (-(float(data[9])) + 90)%360
+            self.phiCoord2 = float(data[10])
+            self.rollCoord2 = float(data[11])
+
 #            print(self.thetaCoord)
             self.omegaCalm = 0.01
+
     def crossPole(self,theta,lastTheta):
         if theta - lastTheta > 180:
             dTheta = -(360 - (theta - lastTheta))
@@ -225,20 +249,26 @@ class simulatedThrow(sensorThrow):
         myProj = Proj("+proj=utm +zone=16, +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
         lastTime = time.time()
         lastTheta = self.thetaCoord
+        lastTheta2 = self.thetaCoord2
         while True:
             self.alt = self.altitude
             self.lon, self.lat = myProj(self.eastward +562543.955,self.northward + 4415393.656 ,inverse=True)           
-#            print(self.lon,self.lat)
-#            self.lon, self.lat = myProj(self.eastward+562543.955 ,self.southward - 4415393.656 ,inverse=True)
-#            self.lon, self.lat = myProj(self.eastward+ 4415393.656,self.southward + 562543.955,inverse=True)
+            self.alt2 = self.altitude2
+            self.lon2, self.lat2 = myProj(self.eastward2 +562543.955,self.northward2 + 4415393.656 ,inverse=True)
             theta = self.thetaCoord                                                                     #avoid race conditions
+            theta2 = self.thetaCoord2                                                                     #avoid race conditions
             dt = lastTime - time.time()
             lastTime = time.time()
             dTheta = self.crossPole(theta,lastTheta)
+            dTheta2 = self.crossPole(theta2,lastTheta2)
             if(theta != lastTheta):
                 lastTheta = theta
                 self.omega = self.omegaCalm*(dTheta / dt)
+            if(theta2 != lastTheta2):
+                lastTheta2 = theta2
+                self.omega2 = self.omegaCalm*(dTheta2 / dt)
     
+
 #overwrite sendValues as well
 #not finished
     @threaded

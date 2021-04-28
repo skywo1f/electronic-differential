@@ -172,10 +172,10 @@ class twoStepDriving:
         
                         turnStrength = DEK/distance + AEK*abs(delta) + sumE*SEK
 #                        print(nav.phiCoord_g)
-                        print(nav.rollCoord_g)
+#                        print(nav.rollCoord_g)
 #                       print(latitude_g,longitude_g)
 #                        print(thetaCoord_g,kAngle_g)
-                        print(distance,delta,direction,overshot,sumE*SEK)
+#                        print(distance,delta,direction,overshot,sumE*SEK)
                         if omegaSmooth > 0:
                                 if direction > 0:
                                         nav.leftWheelPwr_g = (fwdSpeed - turnStrength + overshot)

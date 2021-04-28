@@ -8,16 +8,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
 
 # Build our plugin
 add_library(velodyne_plugin SHARED velodyne_plugin.cc)
+add_library(follow_plugin SHARED follow_plugin.cc)
+
 target_link_libraries(velodyne_plugin ${GAZEBO_LIBRARIES})
+target_link_libraries(follow_plugin ${GAZEBO_LIBRARIES})
 
 # Build the stand-alone test program
 add_executable(vel vel.cc)
+add_executable(fol fol.cc)
 
 if (${gazebo_VERSION_MAJOR} LESS 6)
   # These two
   include(FindBoost)
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED system filesystem regex)
   target_link_libraries(vel ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(fol ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 else()
   target_link_libraries(vel ${GAZEBO_LIBRARIES})
+  target_link_libraries(fol ${GAZEBO_LIBRARIES})
 endif()

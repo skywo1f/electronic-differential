@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
-#define PORT 8190 
+#define PORT 8191 
 #include <pthread.h>
 #include <vector>
 #include <sstream>
@@ -42,12 +42,11 @@ void posesStampedCallback(ConstPosesStampedPtr &posesStamped)
 
   ::google::protobuf::int32 sec = posesStamped->time().sec();
   ::google::protobuf::int32 nsec = posesStamped->time().nsec();
-//  std::cout << "Read time: sec: " << sec << " nsec: " << nsec << std::endl;
   for (int i =0; i < posesStamped->pose_size(); ++i)
   {
     const ::gazebo::msgs::Pose &pose = posesStamped->pose(i);
     std::string name = pose.name();
-	if (name == std::string("my_velodyne")) {
+	if (name == std::string("my_follower")) {			//my_follower?
 		const ::gazebo::msgs::Vector3d &position = pose.position();
 		x_pos = position.x();
 		y_pos = position.y();
@@ -58,26 +57,9 @@ void posesStampedCallback(ConstPosesStampedPtr &posesStamped)
 		y_ori = orientation.y();
 		z_ori = orientation.z();
 		w_ori = orientation.w();
-	}
-	    	/*
-    if (name == std::string("my_velodyne::my_robot::left_wheel")) {
-      const ::gazebo::msgs::Vector3d &position = pose.position();
-      double x = position.x();
-      double y = position.y();
-      double z = position.z();
-    x_pos_left = x;
-    z_pos_left = z;
-    }
-    if (name == std::string("my_velodyne::my_robot::right_wheel")) {
-      const ::gazebo::msgs::Vector3d &position = pose.position();
+//std::cout << "position x " << x_pos << "position z " << z_pos << std::endl;
 
-      double x = position.x();
-      double y = position.y();
-      double z = position.z();
-    x_pos_right = x;
-    z_pos_right = z;
-    }
-*/
+	}
 
 
   }
@@ -103,7 +85,7 @@ int main(int _argc, char **_argv)
         }
         if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         {
-                printf("\nConnection Failed for vel\n");
+                printf("\nConnection Failed for follower \n");
         }
 gazebo::client::setup(_argc, _argv);
           // Create our node for communication
@@ -139,27 +121,20 @@ gazebo::client::setup(_argc, _argv);
         std::stringstream ss(bufferString);
         while (ss >> d)
             wheelVec.push_back (d);
+//	std::cout << "wheel 1 " << wheelVec[0] << " wheel 2 " << wheelVec[1] << std::endl;
 
 //	printf("\n%s\n",buffer );
 //        printf("finished connecting to python\n");
 
 
 
-/*
-    // Load gazebo as a client
-#if GAZEBO_MAJOR_VERSION < 6
-  gazebo::setupClient(_argc, _argv);
-#else
-  gazebo::client::setup(_argc, _argv);
-#endif
-*/
   // Create our node for communication
   gazebo::transport::NodePtr node(new gazebo::transport::Node());
   node->Init();
 
-  // Publish to the  velodyne topic
+  // Publish to the  follow topic
   gazebo::transport::PublisherPtr pub =
-    node->Advertise<gazebo::msgs::Vector3d>("~/my_velodyne/vel_cmd");
+    node->Advertise<gazebo::msgs::Vector3d>("~/my_follower/fol_cmd");
 
   // Wait for a subscriber to connect to this publisher
   pub->WaitForConnection();
@@ -176,14 +151,6 @@ gazebo::client::setup(_argc, _argv);
   wheelVec.clear();
   // Send the message
   pub->Publish(msg);
-/*
-  // Make sure to shut everything down.
-#if GAZEBO_MAJOR_VERSION < 6
-  gazebo::shutdown();
-#else
-  gazebo::client::shutdown();
-#endif
-*/
     
     }
 }

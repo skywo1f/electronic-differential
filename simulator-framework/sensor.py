@@ -202,9 +202,9 @@ class simulatedThrow(sensorThrow):
             data = re.split(' ',alphabet)
 #            self.northward =   float(data[0])                                                          #default
 #            self.eastward = float(data[1])
-            self.northward =   -float(data[1])
+            self.northward =   -float(data[2])
             self.eastward = -float(data[0])
-            self.altitude = float(data[2])
+            self.altitude = float(data[1])
 
             self.thetaCoord = (-(float(data[3])) + 90)%360
             self.phiCoord = float(data[4])
@@ -227,6 +227,7 @@ class simulatedThrow(sensorThrow):
         lastTheta = self.thetaCoord
         while True:
             self.alt = self.altitude
+            print(self.eastward,self.northward)
             self.lon, self.lat = myProj(self.eastward +562543.955,self.northward + 4415393.656 ,inverse=True)           
 #            print(self.lon,self.lat)
 #            self.lon, self.lat = myProj(self.eastward+562543.955 ,self.southward - 4415393.656 ,inverse=True)

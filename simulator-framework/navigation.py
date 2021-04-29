@@ -37,6 +37,17 @@ class navigation:
                 self.longitude_g = 0                                 #longitude data from gps
                 self.altitude_g = 0
                 self.omega_g = 0                                     #turning rate data from gyro
+                self.leftWheelPwr2_g = 0.0                            #angle to set left wheel to
+                self.rightWheelPwr2_g = 0.0                           #angle to set right wheel to
+                self.thetaCoord2_g = 0                                #heading data from compass
+                self.phiCoord2_g = 0
+                self.rollCoord2_g = 0
+                self.latitude2_g  = 0                                 #latitude data from gps
+                self.longitude2_g = 0                                 #longitude data from gps
+                self.altitude2_g = 0
+                self.omega2_g = 0                                     #turning rate data from gyro
+
+
                 self.numWp_g = 0                                     #what waypoint am I heading towards
                 self.kAngle_g = 0                                    #kalman smoothed heading
                 self.gpsTheta_g = 0                                  #omegaheading data from gps history
@@ -46,15 +57,23 @@ class navigation:
                 self.getGPS()
                 self.getPitch()
                 self.getRoll()
+
+                self.getImu2()
+                self.getCompass2(sim_or_real)
+                self.getGPS2()
+                self.getPitch2()
+                self.getRoll2()
+                self.bothPid2()
+
                 self.kalman_angle()
                 self.calcGpsHeading()
                 self.bothPid()
                 if sim_or_real == "sim":
-                        simToCode = simulatedThrow("simulator",5580,5581,5582,5583,5584,5590,5591)                #initialize bridging algorithm for simulator
+                        simToCode = simulatedThrow("simulator",5580,5581,5582,5583,5584,5590,5591, 5592,5594,5595,5596,5597,5593)                #initialize bridging algorithm for simulator
                         simToCode.grabSpeeds()                                                      #grab desired speeds from driver and prepare to hand to simulator
                         simToCode.sendValues()                                                      #take values from simulator and give them to driver
                         simToCode.grabValues()                                                      #grab location data from simulator and prepare to give them to driver
-                        simToCode.convertValues()                                                   #convert from simulated coordinates to gps coordinates
+#                        simToCode.convertValues()                                                   #convert from simulated coordinates to gps coordinates
 
                 if sim_or_real == "real":                        
                         runner = jobs()                                                                         #initiate job scheduler
@@ -85,6 +104,17 @@ class navigation:
                         self.omega_g = -float(message.decode(encoding))
 
         @threaded
+        def getImu2(self):
+                imuContext = zmq.Context()
+                imuSocket = imuContext.socket(zmq.REP)
+                imuSocket.bind("tcp://*:5595")
+                while True:
+                        message = b"0"
+                        message = imuSocket.recv()
+                        imuSocket.send(b"thanks")
+                        self.omega2_g = -float(message.decode(encoding))
+
+        @threaded
         def getCompass(self,sim_or_real):
             gyroContext = zmq.Context()
             gyroSocket = gyroContext.socket(zmq.REP) 
@@ -104,6 +134,29 @@ class navigation:
                     self.thetaCoord_g = angle 
                 lastAngle = angle 
 
+
+
+
+        @threaded
+        def getCompass2(self,sim_or_real):
+            gyroContext = zmq.Context()
+            gyroSocket = gyroContext.socket(zmq.REP) 
+            gyroSocket.bind("tcp://*:5594")
+            lastAngle = 0.1
+            while True:
+                message = b"0"
+                message = gyroSocket.recv()
+                gyroSocket.send(b"thanks")
+                angle = float(message.decode(encoding))
+                if (angle == 0.0):                                                                  #sometimes compass (or usb interface) gives 0's. just ignore
+                    angle = lastAngle
+                if sim_or_real == "real":
+                    deviation = self.angle_interpolate(angle)
+                    thetaCoord2_g = angle + deviation
+                else:
+                    self.thetaCoord2_g = angle
+                lastAngle = angle
+
         @threaded
         def getGPS(self):
                 gpsContext = zmq.Context()
@@ -121,7 +174,26 @@ class navigation:
                             preLong = float(data[1])
                             self.latitude_g = preLat
                             self.longitude_g = preLong
-       
+
+        @threaded
+        def getGPS2(self):
+                gpsContext = zmq.Context()
+                gpsSocket = gpsContext.socket(zmq.REP)
+                gpsSocket.bind("tcp://*:5592")
+
+                while True:
+                        message = b"0"
+                        message = gpsSocket.recv()
+                        gpsSocket.send(b"thanks")
+                        decoded = message.decode(encoding)
+                        data = re.split(' ',decoded)
+                        if(len(data) > 1):
+                            preLat = float(data[0])
+                            preLong = float(data[1])
+                            self.latitude2_g = preLat
+                            self.longitude2_g = preLong
+
+
         @threaded
         def getPitch(self):
                 pitchContext = zmq.Context()
@@ -135,6 +207,19 @@ class navigation:
                     self.phiCoord_g = decoded
 
         @threaded
+        def getPitch2(self):
+                pitchContext = zmq.Context()
+                pitchSocket = pitchContext.socket(zmq.REP)
+                pitchSocket.bind("tcp://*:5596")
+                while True:
+                    message = b"0"
+                    message = pitchSocket.recv()
+                    pitchSocket.send(b"thanks")
+                    decoded = message.decode(encoding)
+                    self.phiCoord2_g = decoded
+
+
+        @threaded
         def getRoll(self):
                 rollContext = zmq.Context()
                 rollSocket = rollContext.socket(zmq.REP)
@@ -145,6 +230,19 @@ class navigation:
                     rollSocket.send(b"thanks")
                     decoded = message.decode(encoding)
                     self.rollCoord_g = decoded
+
+        @threaded
+        def getRoll2(self):
+                rollContext = zmq.Context()
+                rollSocket = rollContext.socket(zmq.REP)
+                rollSocket.bind("tcp://*:5597")
+                while True:
+                    message = b"0"
+                    message = rollSocket.recv()
+                    rollSocket.send(b"thanks")
+                    decoded = message.decode(encoding)
+                    self.rollCoord2_g = decoded
+
 
         def angle_interpolate(self,angle):
 #    deviations = [0.95, 6.75, 8.7, 9.3, 5.35, -6.1, -15.5, -9.5, 0.95]                    #deviations
@@ -247,6 +345,15 @@ class navigation:
                 socket.send(response.encode(encoding))
         
 
+        @threaded
+        def bothPid2(self):
+            context = zmq.Context()
+            socket = context.socket(zmq.REP)
+            socket.bind("tcp://*:5593")
+            while True:
+                response = str(self.leftWheelPwr2_g) + " " + str(self.rightWheelPwr2_g)
+                message = socket.recv()
+                socket.send(response.encode(encoding))
 
 
 

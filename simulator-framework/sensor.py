@@ -149,7 +149,7 @@ class sensorThrow:
 #port5 talks to d2g
 class simulatedThrow(sensorThrow):
     encoding = 'utf-8'
-    def __init__(self,name,port,port2,port3,port4,port5,port6,port7,usb = 0,baudrate = 0,nValues = 0,deviations = 0):
+    def __init__(self,name,port,port2,port3,port4,port5,port6,port7,port8,port9,port10,port11,port12,port13,usb = 0,baudrate = 0,nValues = 0,deviations = 0):
         super().__init__(name,port,usb,baudrate,nValues,deviations)
         tcpPart = "tcp://localhost:"
         fullPort2 = tcpPart + str(port2)
@@ -163,11 +163,26 @@ class simulatedThrow(sensorThrow):
         fullPort7 = tcpPart + str(port7)
         self.port7 = fullPort7
 
+        fullPort8 = tcpPart + str(port8)
+        self.port8 = fullPort8
+        fullPort9 = tcpPart + str(port9)
+        self.port9 = fullPort9
+        fullPort10 = tcpPart + str(port10)
+        self.port10 = fullPort10
+        fullPort11 = tcpPart + str(port11)
+        self.port11 = fullPort11
+        fullPort12 = tcpPart + str(port12)
+        self.port12 = fullPort12
+        fullPort13 = tcpPart + str(port13)
+        self.port13 = fullPort13
+
+
+
         tcpPartStar = "tcp://*:"
         fullPort5 = tcpPartStar + str(port5)
         self.port5 = fullPort5
 
-        self.northward = 0
+        self.northward = 0 
         self.eastward = 0
         self.altitude = 0
         self.thetaCoord = 0
@@ -204,18 +219,20 @@ class simulatedThrow(sensorThrow):
         socket5.bind("tcp://*:5584")
         message = socket5.recv()
 #        response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp2*self.dampConstant) + " " + str(self.rwp2*self.dampConstant)
-        response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant)
+        response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp2*self.dampConstant) + " " + str(self.rwp2*self.dampConstant)
         socket5.send(response.encode(encoding))
         print("connected")
+        myProj = Proj("+proj=utm +zone=16, +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+        lastTime = time.time()
+        lastTheta = self.thetaCoord
+        lastTheta2 = self.thetaCoord2
 
         while True:
-            response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant)
+            response = str(self.lwp*self.dampConstant) + " " + str(self.rwp*self.dampConstant) + " " + str(self.lwp2*self.dampConstant) + " " + str(self.rwp2*self.dampConstant)
             message = socket5.recv()
             socket5.send(response.encode(encoding))
             alphabet = message.decode(encoding)
             data = re.split(' ',alphabet)
-#            self.northward =   float(data[0])                                                          #default
-#            self.eastward = float(data[1])
             self.northward =   -float(data[2])
             self.eastward = -float(data[0])
             self.altitude = float(data[1])
@@ -235,25 +252,10 @@ class simulatedThrow(sensorThrow):
 #            print(self.thetaCoord)
             self.omegaCalm = 0.01
 
-    def crossPole(self,theta,lastTheta):
-        if theta - lastTheta > 180:
-            dTheta = -(360 - (theta - lastTheta))
-        elif theta - lastTheta < -180:
-            dTheta = (theta - lastTheta) + 360
-        else:
-            dTheta = theta - lastTheta
-        return dTheta
-
-    @threaded
-    def convertValues(self):
-        myProj = Proj("+proj=utm +zone=16, +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-        lastTime = time.time()
-        lastTheta = self.thetaCoord
-        lastTheta2 = self.thetaCoord2
-        while True:
             self.alt = self.altitude
-            self.lon, self.lat = myProj(self.eastward +562543.955,self.northward + 4415393.656 ,inverse=True)           
+            self.lon, self.lat = myProj(self.eastward +562543.955,self.northward + 4415393.656 ,inverse=True)
             self.alt2 = self.altitude2
+
             self.lon2, self.lat2 = myProj(self.eastward2 +562543.955,self.northward2 + 4415393.656 ,inverse=True)
             theta = self.thetaCoord                                                                     #avoid race conditions
             theta2 = self.thetaCoord2                                                                     #avoid race conditions
@@ -267,15 +269,23 @@ class simulatedThrow(sensorThrow):
             if(theta2 != lastTheta2):
                 lastTheta2 = theta2
                 self.omega2 = self.omegaCalm*(dTheta2 / dt)
-    
+
+
+
+
+
+    def crossPole(self,theta,lastTheta):
+        if theta - lastTheta > 180:
+            dTheta = -(360 - (theta - lastTheta))
+        elif theta - lastTheta < -180:
+            dTheta = (theta - lastTheta) + 360
+        else:
+            dTheta = theta - lastTheta
+        return dTheta
 
 #overwrite sendValues as well
-#not finished
     @threaded
     def sendValues(self):
-#        while True:
-#            if not deviations:
-#                deviations = [0]*nValues
 #gps
         context = zmq.Context()
         socket1 = context.socket(zmq.REQ)
@@ -297,10 +307,33 @@ class simulatedThrow(sensorThrow):
         socket7 = context7.socket(zmq.REQ)
         socket7.connect(self.port7)
 
+#gps
+        context8 = zmq.Context()
+        socket8 = context8.socket(zmq.REQ)
+        socket8.connect(self.port8)
+#compass
+        context9 = zmq.Context()
+        socket9 = context9.socket(zmq.REQ)
+        socket9.connect(self.port9)
+#gyro
+        context10 = zmq.Context()
+        socket10 = context10.socket(zmq.REQ)
+        socket10.connect(self.port10)
+
+#imu
+        context11 = zmq.Context()
+        socket11 = context11.socket(zmq.REQ)
+        socket11.connect(self.port11)
+        context12 = zmq.Context()
+        socket12 = context12.socket(zmq.REQ)
+        socket12.connect(self.port12)
+
+
         while True:
             gpsString = str(self.lat) + " " + str(self.lon)
+#            print(gpsString)
             socket1.send(gpsString.encode(encoding))
-            message = socket1.recv()
+            message = socket1.recv()                            #message doesnt matter here, just an aknowledgement
             compassString = str(self.thetaCoord)
             socket3.send(compassString.encode(encoding))
             message = socket3.recv()
@@ -317,12 +350,41 @@ class simulatedThrow(sensorThrow):
             socket7.send(rollString.encode(encoding))
             message = socket7.recv()
 
+
+            gpsString2 = str(self.lat2) + " " + str(self.lon2)
+            socket8.send(gpsString2.encode(encoding))
+            message = socket8.recv()
+            compassString2 = str(self.thetaCoord2)
+            socket9.send(compassString2.encode(encoding))
+            message = socket9.recv()
+
+            omegaString2 = str(self.omega2)
+            socket10.send(omegaString2.encode(encoding))
+            message = socket10.recv()
+
+            pitchString2 = str(self.phiCoord2)
+            socket11.send(pitchString2.encode(encoding))
+            message = socket11.recv()
+
+            rollString2 = str(self.rollCoord2)
+            socket12.send(rollString2.encode(encoding))
+            message = socket12.recv()
+
+
+
+
+
+
 #grab output speed values from driving algorithm to send back to simulator
     @threaded
     def grabSpeeds(self):
         context2 = zmq.Context()
         socket2 = context2.socket(zmq.REQ)
         socket2.connect(self.port2)
+
+        context13 = zmq.Context()
+        socket13 = context13.socket(zmq.REQ)
+        socket13.connect(self.port13)
 
         while True:
             response = "thanks"
@@ -332,6 +394,15 @@ class simulatedThrow(sensorThrow):
             data = re.split(' ',alphabet)
             self.lwp =   float(data[0])
             self.rwp = float(data[1]) 
+
+            socket13.send(response.encode(encoding))
+            message = socket13.recv()
+            alphabet = message.decode(encoding)
+            data = re.split(' ',alphabet)
+            self.lwp2 =   float(data[0])
+            self.rwp2 = float(data[1])
+
+
 
 class radarSensorThrow(sensorThrow):
         def   __init__(self,name,port,usb,baudrate,nValues,deviations):

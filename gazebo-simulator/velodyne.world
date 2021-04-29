@@ -24,7 +24,7 @@
        <model name="my_follower">
       <include>
         <uri>model://my_follow</uri>
-	<pose>-2.0 0 0 0 0 0</pose>
+	<pose>-.5 0 0</pose>
 	</include>
 
       <!-- Attach the plugin to this model -->

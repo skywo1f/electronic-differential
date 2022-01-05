@@ -5,16 +5,17 @@
 #include <Firmata.h>
 
 
-
+//for connecting to the flysky radio
 // Create iBus Object
 IBusBM ibus;
 
+//for talking to the motors
  /** Initiate vesc1Uart class */
 VescUart vesc1;
 VescUart vesc2;
 
 // Create Nine Axes Motion Object
-
+//for talking to the imu
 NineAxesMotion mySensor;
 
 // Channel Values
@@ -48,7 +49,7 @@ int MotorDirA = 1;
 int MotorDirB = 1;
  
 
-
+//convert transceiver value to wheel value
 // Read the number of a given channel and convert to the range provided.
 // If the channel is off, return the default value
 int readChannel(byte channelInput, int minLimit, int maxLimit, int defaultValue) {
@@ -56,7 +57,7 @@ int readChannel(byte channelInput, int minLimit, int maxLimit, int defaultValue)
   if (ch < 100) return defaultValue;
   return map(ch, 1000, 2000, minLimit, maxLimit);
 }
- 
+ //read the radio switch and convert to boolean
 // Read the channel and return a boolean value
 bool readSwitch(byte channelInput, bool defaultValue) {
   int intDefaultValue = (defaultValue) ? 100 : 0;
@@ -144,17 +145,22 @@ void loop() {
   MotorSpeedB = rcCH3;
  
  
-
+//convert wheel speed from computer readable to human readable
   //Convert to RPM
   rpm1 = 141.176*MotorSpeedA;
   rpm2 = 141.176*MotorSpeedB;
 
 //The Gauntlet: Speed manipulation
-
+//probably dont have to read this twice
  mySensor.updateAccel();
  accz = mySensor.readAccelerometer(Z_AXIS);
  accx = mySensor.readAccelerometer(X_AXIS);
+ //if z isnt getting the full force of gravity and x is seeing some gravity
+ //if z isnt seeing the full force of gravity and x is below a certain amount (sloped the other way)
+ //if one wheel is moving but the other one isnt
+ //conver
   if (accz < 9.4 && accx > 1 || accz < 9.4 && accx < .3 || abs(rpm1) < 300 && abs(rpm2) > 500 || abs(rpm2) < 300 && abs(rpm1) > 500){
+    //make sure this isnt a one-off (imu noise)
     n = n+1;
   
   if (n > 4) {
